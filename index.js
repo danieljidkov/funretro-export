@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 
-const [url, file] = process.argv.slice(2);
+const [url] = process.argv.slice(2);
 
 if (!url) {
   throw 'Please provide a URL as the first argument.';
@@ -20,22 +20,31 @@ async function run() {
   if (!boardTitle) {
     throw 'Board title does not exist. Please check if provided URL is correct.'
   }
+  
+  let data = [[]];
 
   let parsedText = boardTitle + '\n\n';
 
   const columns = await page.$$('.message-list');
 
   for (let i = 0; i < columns.length; i++) {
+    
     const columnTitle = await columns[i].$eval('.column-header', (node) => node.innerText.trim());
+    //Insert the column header
+    data[0].splice(i, 0, columnTitle);
 
     const messages = await columns[i].$$('.message-main');
-    if (messages.length) {
-      parsedText += columnTitle + '\n';
-    }
-    for (let i = 0; i < messages.length; i++) {
-      const messageText = await messages[i].$eval('.message-body .text', (node) => node.innerText.trim());
-      const votes = await messages[i].$eval('.votes .vote-area span.show-vote-count', (node) => node.innerText.trim());
+
+    for (let j = 0; j < messages.length; j++) {
+      let row = j + 1;
+      //Insert a new row if needed
+      if (data.length <= row) {
+        data.push([])
+      }
+      const messageText = await messages[j].$eval('.message-body .text', (node) => node.innerText.trim());
+      const votes = await messages[j].$eval('.votes .vote-area span.show-vote-count', (node) => node.innerText.trim());
       parsedText += `- ${messageText} (${votes})` + '\n';
+      data[row][i] = messageText;
     }
 
     if (messages.length) {
@@ -43,14 +52,22 @@ async function run() {
     }
   }
 
-  return parsedText;
+  let csvData = '';
+  data.forEach(function(array) {
+    let row = array.join(',');
+    csvData += row + '\r\n';
+  });
+
+  let fileName = boardTitle.replace(/\s/g, '');
+  return {csvData, fileName};
 }
 
-function writeToFile(filePath, data) {
-  const resolvedPath = path.resolve(filePath || `../${data.split('\n')[0].replace('/', '')}.txt`);
-  fs.writeFile(resolvedPath, data, (error) => {
+function writeToFile(data, fileName) {
+  const resolvedPath = path.resolve(fileName + '.csv');
+
+  fs.writeFile(resolvedPath, data, 'utf8', (error) => {
     if (error) {
-      throw error;
+      console.error(error);
     } else {
       console.log(`Successfully written to file at: ${resolvedPath}`);
     }
@@ -62,4 +79,4 @@ function handleError(error) {
   console.error(error);
 }
 
-run().then((data) => writeToFile(file, data)).catch(handleError);
+run().then((data) => writeToFile(data.csvData, data.fileName)).catch(handleError);
