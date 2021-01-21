@@ -2,11 +2,16 @@ const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 
-const [url] = process.argv.slice(2);
+const [url, formatType] = process.argv.slice(2);
 
 if (!url) {
   throw 'Please provide a URL as the first argument.';
 }
+ 
+if (!formatType || (formatType !== '1' && formatType !== '2')) {
+  throw 'Please provide a Format Type ("1" or "2") as the second argument.'
+}
+
 
 async function run() {
   const browser = await chromium.launch();
@@ -56,31 +61,60 @@ async function run() {
     }
   }
 
-  let csvData = '';
-  data.forEach(function(array) {
-    let row = array.join(',');
-    csvData += row + '\r\n';
-  });
-
   let fileName = boardTitle.replace(/\s/g, '');
-  return {csvData, fileName};
+  let result = '';
+
+  if (formatType === '1')
+  {
+    fileName += ".txt"
+    result = parsedText;
+  }
+
+  if (formatType === '2')
+  {
+    fileName += ".csv"
+    data.forEach(function(array) {
+      let row = array.join(',');
+      result += row + '\r\n';
+    });
+  }
+
+  return {result, fileName, formatType};
 }
 
-function writeToFile(data, fileName) {
-  const resolvedPath = path.resolve(fileName + '.csv');
+function writeToFile(data, fileName, formatType) {
+  const resolvedPath = path.resolve(fileName);
 
-  fs.writeFile(resolvedPath, data, 'utf8', (error) => {
-    if (error) {
-      console.error(error);
-    } else {
-      console.log(`Successfully written to file at: ${resolvedPath}`);
-    }
-    process.exit();
-  });
+  //Txt format (Format 1)
+  if (formatType === '1')
+  {
+    fs.writeFile(resolvedPath, data, (error) => {
+      if (error) {
+        console.error(error);
+      } else {
+        console.log(`Successfully written to file at: ${resolvedPath}`);
+      }
+      process.exit();
+    });
+  }
+  //CSV format (Format 2)
+  else if (formatType === '2')
+  {
+    fs.writeFile(resolvedPath, data, 'utf8', (error) => {
+      if (error) {
+        console.error(error);
+      } else {
+        console.log(`Successfully written to file at: ${resolvedPath}`);
+      }
+      process.exit();
+    });
+  }
 }
+
+
 
 function handleError(error) {
   console.error(error);
 }
 
-run().then((data) => writeToFile(data.csvData, data.fileName)).catch(handleError);
+run().then((data) => writeToFile(data.result, data.fileName, data.formatType)).catch(handleError);
