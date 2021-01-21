@@ -44,7 +44,11 @@ async function run() {
       const messageText = await messages[j].$eval('.message-body .text', (node) => node.innerText.trim());
       const votes = await messages[j].$eval('.votes .vote-area span.show-vote-count', (node) => node.innerText.trim());
       parsedText += `- ${messageText} (${votes})` + '\n';
-      data[row][i] = messageText;
+
+      if (votes > 0)
+      {
+        data[row][i] = messageText;
+      }
     }
 
     if (messages.length) {

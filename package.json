@@ -10,7 +10,6 @@
   "author": "Julius Morkūnas",
   "license": "MIT",
   "dependencies": {
-    "csv-writer": "^1.6.0",
     "playwright": "^1.3.0"
   }
 }
