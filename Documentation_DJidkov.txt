@@ -1,0 +1,16 @@
+Instructions:
+
+1. git clone https://github.com/danieljidkov/funretro-export
+
+2. cd funretro-export
+
+3. npm install
+
+
+For Format 1 (Txt):
+ 
+npm start -- "https://easyretro.io/publicboard/CGvRainS7bR2EGjqtYcJFwq1w5F3/b98b312b-047d-4845-809b-9070d3807d26" "1"
+
+For Format 2 (CSV):
+ 
+npm start -- "https://easyretro.io/publicboard/CGvRainS7bR2EGjqtYcJFwq1w5F3/b98b312b-047d-4845-809b-9070d3807d26" "2"
